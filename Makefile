@@ -9,7 +9,7 @@
 #   make verify PACKAGE=game.djpak
 #   make all DJ_ENGINE_DIR=/path/to/DJ-Engine PROJECT_DIR=/path/to/game
 
-.PHONY: all build-engine package-djproj package-djpak verify clean help
+.PHONY: all build-engine package-djproj package-djpak verify verify-djpak verify-djproj clean help
 
 # --- Configuration ---
 
@@ -76,13 +76,23 @@ package-djpak: ## Package a project as .djpak (playable)
 		"$(OUTPUT_DIR)/$(GAME_NAME)-$(GAME_VERSION).djpak" \
 		--engine-version "$(ENGINE_VERSION)"
 
-verify: ## Verify a .djpak package
+verify: verify-djpak ## Verify a .djpak package (alias for verify-djpak)
+
+verify-djpak: ## Verify a .djpak package
 	@if [ -z "$(PACKAGE)" ]; then \
 		echo "Error: PACKAGE is required"; \
-		echo "Usage: make verify PACKAGE=game.djpak"; \
+		echo "Usage: make verify-djpak PACKAGE=game.djpak"; \
 		exit 1; \
 	fi
 	@bash scripts/verify-djpak.sh "$(PACKAGE)"
+
+verify-djproj: ## Verify a .djproj package
+	@if [ -z "$(PACKAGE)" ]; then \
+		echo "Error: PACKAGE is required"; \
+		echo "Usage: make verify-djproj PACKAGE=game.djproj"; \
+		exit 1; \
+	fi
+	@bash scripts/verify-djproj.sh "$(PACKAGE)"
 
 generate-project: ## Generate project.json from game assets
 	@if [ -z "$(PROJECT_DIR)" ]; then \
