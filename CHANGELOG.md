@@ -18,3 +18,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - `validate-packages.yml` — Validate package format compliance
 - Makefile with unified command interface
 - DoomExe as first `.djpak` release target
+- `docs/VISION.md` — Project vision, release strategy, current status, ecosystem context
+- `docs/HOW_TO_PLAY.md` — End-user guide for downloading and playing games
+- `docs/RELEASE_PROCESS.md` — Step-by-step release workflow for maintainers
+- `CONTRIBUTING.md` — Contribution guidelines for the release pipeline
+- `SECURITY.md` — Security policy and vulnerability reporting
+- Expanded README with status section, DoomExe description, documentation index, and ecosystem links
