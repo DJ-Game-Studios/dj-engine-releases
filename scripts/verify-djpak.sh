@@ -159,36 +159,41 @@ echo "[5/5] Asset reference validation..."
 if [[ -f "$EXTRACT/manifest.json" ]]; then
     REF_ERRORS=0
 
-    # Check scenes
-    python3 -c "
+    # Check scenes (use process substitution to avoid subshell variable loss)
+    while IFS= read -r spath; do
+        [[ -z "$spath" ]] && continue
+        if [[ ! -f "$EXTRACT/$spath" ]]; then
+            log_fail "Referenced scene missing: $spath"
+            REF_ERRORS=$((REF_ERRORS + 1))
+        else
+            log_pass "Scene: $spath"
+        fi
+    done < <(python3 -c "
 import json
 m = json.load(open('$EXTRACT/manifest.json'))
 for s in m.get('scenes', []):
     print(s.get('path', ''))
-" 2>/dev/null | while IFS= read -r spath; do
-        [[ -z "$spath" ]] && continue
-        if [[ ! -f "$EXTRACT/$spath" ]]; then
-            log_fail "Referenced scene missing: $spath"
-            # Can't increment REF_ERRORS in subshell, counted via ERRORS below
-        else
-            log_pass "Scene: $spath"
-        fi
-    done
+" 2>/dev/null)
 
-    # Check story graphs
-    python3 -c "
+    # Check story graphs (use process substitution to avoid subshell variable loss)
+    while IFS= read -r gpath; do
+        [[ -z "$gpath" ]] && continue
+        if [[ ! -f "$EXTRACT/$gpath" ]]; then
+            log_fail "Referenced story graph missing: $gpath"
+            REF_ERRORS=$((REF_ERRORS + 1))
+        else
+            log_pass "Story graph: $gpath"
+        fi
+    done < <(python3 -c "
 import json
 m = json.load(open('$EXTRACT/manifest.json'))
 for g in m.get('story_graphs', []):
     print(g.get('path', ''))
-" 2>/dev/null | while IFS= read -r gpath; do
-        [[ -z "$gpath" ]] && continue
-        if [[ ! -f "$EXTRACT/$gpath" ]]; then
-            log_fail "Referenced story graph missing: $gpath"
-        else
-            log_pass "Story graph: $gpath"
-        fi
-    done
+" 2>/dev/null)
+
+    if [[ $REF_ERRORS -gt 0 ]]; then
+        ERRORS=$((ERRORS + REF_ERRORS))
+    fi
 fi
 
 # --- Summary ---
