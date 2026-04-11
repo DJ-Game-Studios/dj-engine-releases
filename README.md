@@ -101,12 +101,29 @@ All workflows are `workflow_dispatch` only (manual trigger) to avoid GitHub Acti
 | `release-game.yml` | Package & release a game | Game name, format, engine ref |
 | `validate-packages.yml` | Validate `.djproj`/`.djpak` compliance | Package path |
 
+## Documentation
+
+| Document | Purpose |
+|----------|---------|
+| [AGENTS.md](AGENTS.md) | Instructions for Devin and future release agents |
+| [INTEGRATION.md](INTEGRATION.md) | How this repo fits into the Helix ecosystem |
+| [ENGINE_AGENT_HANDOFF.md](ENGINE_AGENT_HANDOFF.md) | What the DJ-Engine agent needs to implement |
+| [TESTING.md](TESTING.md) | Bug testing, verification, and tracking procedures |
+| [AGENT_PROMPT_DJ_ENGINE.md](AGENT_PROMPT_DJ_ENGINE.md) | Full engine-side implementation spec (7 tasks) |
+| [spec/DJPROJ_FORMAT.md](spec/DJPROJ_FORMAT.md) | `.djproj` format specification |
+| [spec/DJPAK_FORMAT.md](spec/DJPAK_FORMAT.md) | `.djpak` format specification |
+| [spec/VERSION_COMPAT.md](spec/VERSION_COMPAT.md) | Version compatibility matrix |
+
 ## Related Repositories
 
-- [DJ-Engine](https://github.com/djmsqrvve/DJ-Engine) — Source code for the engine
-- [Helix2000](https://github.com/djmsqrvve/Helix2000) — 2D MMORPG companion game
-- [helix_3d](https://github.com/djmsqrvve/helix_3d) — 3D renderer
-- [helix_standardization](https://github.com/djmsqrvve/helix_standardization) — Data standardization
+| Repo | Role in Ecosystem |
+|------|-------------------|
+| [DJ-Engine](https://github.com/djmsqrvve/DJ-Engine) | Engine source code (Rust/Bevy 0.18) — we compile and package from this |
+| [Helix2000](https://github.com/djmsqrvve/Helix2000) | 2D MMORPG (React/Phaser/Colyseus) — sibling game project |
+| [helix_3d](https://github.com/djmsqrvve/helix_3d) | 3D renderer (Rust/Bevy) — sibling engine |
+| [helix_standardization](https://github.com/djmsqrvve/helix_standardization) | Canonical TOML entity data — upstream data source for games |
+| [helix-tools](https://github.com/djmsqrvve/helix-tools) | 3D asset pipeline (GLTF, Blender, animation) |
+| [docs](https://github.com/djmsqrvve/docs) | Centralized ecosystem documentation |
 
 ## License
 
