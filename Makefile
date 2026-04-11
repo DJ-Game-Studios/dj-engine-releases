@@ -9,7 +9,7 @@
 #   make verify PACKAGE=game.djpak
 #   make all DJ_ENGINE_DIR=/path/to/DJ-Engine PROJECT_DIR=/path/to/game
 
-.PHONY: all build-engine package-djproj package-djpak verify clean help
+.PHONY: all build-engine package-djproj package-djpak verify verify-djpak verify-djproj clean help
 
 # --- Configuration ---
 
@@ -31,13 +31,15 @@ help: ## Show this help
 	@echo "  make package-djproj PROJECT_DIR=<path>    Package project as .djproj (editable)"
 	@echo "  make package-djpak PROJECT_DIR=<path>     Package project as .djpak (playable)"
 	@echo "  make verify PACKAGE=<file.djpak>          Verify a .djpak integrity"
+	@echo "  make verify-djpak PACKAGE=<file.djpak>   Verify a .djpak integrity"
+	@echo "  make verify-djproj PACKAGE=<file.djproj> Verify a .djproj integrity"
 	@echo "  make generate-project PROJECT_DIR=<path>  Generate project.json from game assets"
 	@echo "  make clean                                 Remove staged release artifacts"
 	@echo ""
 	@echo "Options:"
 	@echo "  DJ_ENGINE_DIR    Path to DJ-Engine source repo"
 	@echo "  PROJECT_DIR      Path to game project directory"
-	@echo "  PACKAGE          Path to .djpak file for verification"
+	@echo "  PACKAGE          Path to .djpak/.djproj file for verification"
 	@echo "  OUTPUT_DIR       Output directory (default: releases/)"
 	@echo "  ENGINE_VERSION   Engine version tag (default: 0.1.0)"
 	@echo "  GAME_VERSION     Game version tag (default: 0.1.0)"
@@ -76,13 +78,29 @@ package-djpak: ## Package a project as .djpak (playable)
 		"$(OUTPUT_DIR)/$(GAME_NAME)-$(GAME_VERSION).djpak" \
 		--engine-version "$(ENGINE_VERSION)"
 
-verify: ## Verify a .djpak package
+verify: ## Verify a .djpak package (alias for verify-djpak)
 	@if [ -z "$(PACKAGE)" ]; then \
 		echo "Error: PACKAGE is required"; \
 		echo "Usage: make verify PACKAGE=game.djpak"; \
 		exit 1; \
 	fi
 	@bash scripts/verify-djpak.sh "$(PACKAGE)"
+
+verify-djpak: ## Verify a .djpak package
+	@if [ -z "$(PACKAGE)" ]; then \
+		echo "Error: PACKAGE is required"; \
+		echo "Usage: make verify-djpak PACKAGE=game.djpak"; \
+		exit 1; \
+	fi
+	@bash scripts/verify-djpak.sh "$(PACKAGE)"
+
+verify-djproj: ## Verify a .djproj package
+	@if [ -z "$(PACKAGE)" ]; then \
+		echo "Error: PACKAGE is required"; \
+		echo "Usage: make verify-djproj PACKAGE=game.djproj"; \
+		exit 1; \
+	fi
+	@bash scripts/verify-djproj.sh "$(PACKAGE)"
 
 generate-project: ## Generate project.json from game assets
 	@if [ -z "$(PROJECT_DIR)" ]; then \

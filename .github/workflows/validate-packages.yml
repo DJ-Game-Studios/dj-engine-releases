@@ -29,6 +29,7 @@ jobs:
           shellcheck scripts/package-djproj.sh || true
           shellcheck scripts/package-djpak.sh || true
           shellcheck scripts/verify-djpak.sh || true
+          shellcheck scripts/verify-djproj.sh || true
           shellcheck scripts/build-engine.sh || true
           echo "=== Shellcheck complete ==="
 
@@ -114,6 +115,10 @@ jobs:
           ./scripts/verify-djpak.sh /tmp/test-output.djpak
 
           echo ""
+          echo "=== Testing .djproj verification ==="
+          ./scripts/verify-djproj.sh /tmp/test-output.djproj
+
+          echo ""
           echo "=== All validation tests passed ==="
 
   e2e-packaging:
@@ -151,6 +156,10 @@ jobs:
       - name: Verify doomexe .djpak
         run: |
           ./scripts/verify-djpak.sh /tmp/doomexe.djpak
+
+      - name: Verify doomexe .djproj
+        run: |
+          ./scripts/verify-djproj.sh /tmp/doomexe.djproj
 
       - name: Upload test packages
         uses: actions/upload-artifact@v4
