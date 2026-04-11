@@ -1,0 +1,156 @@
+name: Release Game Package
+
+# Manual trigger only — avoids GitHub Actions billing costs.
+on:
+  workflow_dispatch:
+    inputs:
+      game_name:
+        description: 'Game name (e.g. doomexe)'
+        required: true
+        default: 'doomexe'
+      format:
+        description: 'Package format'
+        type: choice
+        options:
+          - djpak
+          - djproj
+          - both
+        default: 'both'
+      engine_ref:
+        description: 'DJ-Engine repo ref (branch, tag, or commit SHA)'
+        required: true
+        default: 'main'
+      engine_version:
+        description: 'Engine version to embed in .djpak manifest'
+        required: true
+        default: '0.1.0'
+      game_version:
+        description: 'Game version tag (e.g. 0.1.0)'
+        required: true
+        default: '0.1.0'
+      create_release:
+        description: 'Create a GitHub Release with packages attached'
+        type: boolean
+        default: true
+
+jobs:
+  package:
+    name: Package Game
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out releases repo
+        uses: actions/checkout@v4
+
+      - name: Check out DJ-Engine (for game source and project data)
+        uses: actions/checkout@v4
+        with:
+          repository: djmsqrvve/DJ-Engine
+          ref: ${{ github.event.inputs.engine_ref }}
+          path: DJ-Engine
+
+      - name: Locate game project directory
+        id: locate
+        run: |
+          GAME="${{ github.event.inputs.game_name }}"
+          # DoomExe and other games live under games/dev/ in DJ-Engine
+          # For games that have a project.json, use that directly.
+          # For compiled games (like doomexe), we need to generate a project
+          # from the game's asset structure.
+          GAME_DIR="DJ-Engine/games/dev/$GAME"
+          if [[ -d "$GAME_DIR" ]]; then
+            echo "game_dir=$GAME_DIR" >> "$GITHUB_OUTPUT"
+            echo "Found game directory: $GAME_DIR"
+          else
+            echo "::error::Game directory not found: $GAME_DIR"
+            exit 1
+          fi
+
+      - name: Ensure project.json exists (generate if needed)
+        run: |
+          GAME_DIR="${{ steps.locate.outputs.game_dir }}"
+          if [[ ! -f "$GAME_DIR/project.json" ]]; then
+            echo "No project.json found — generating from game assets..."
+            python3 scripts/generate-project-json.py "$GAME_DIR" \
+              --name "${{ github.event.inputs.game_name }}" \
+              --version "${{ github.event.inputs.game_version }}"
+          else
+            echo "project.json already exists"
+          fi
+
+      - name: Make scripts executable
+        run: chmod +x scripts/*.sh
+
+      - name: Package as .djproj
+        if: ${{ github.event.inputs.format == 'djproj' || github.event.inputs.format == 'both' }}
+        run: |
+          GAME_DIR="${{ steps.locate.outputs.game_dir }}"
+          GAME="${{ github.event.inputs.game_name }}"
+          VERSION="${{ github.event.inputs.game_version }}"
+          mkdir -p artifacts
+          ./scripts/package-djproj.sh "$GAME_DIR" "artifacts/${GAME}-${VERSION}.djproj"
+
+      - name: Package as .djpak
+        if: ${{ github.event.inputs.format == 'djpak' || github.event.inputs.format == 'both' }}
+        run: |
+          GAME_DIR="${{ steps.locate.outputs.game_dir }}"
+          GAME="${{ github.event.inputs.game_name }}"
+          VERSION="${{ github.event.inputs.game_version }}"
+          mkdir -p artifacts
+          ./scripts/package-djpak.sh "$GAME_DIR" "artifacts/${GAME}-${VERSION}.djpak" \
+            --engine-version "${{ github.event.inputs.engine_version }}"
+
+      - name: Verify .djpak integrity
+        if: ${{ github.event.inputs.format == 'djpak' || github.event.inputs.format == 'both' }}
+        run: |
+          GAME="${{ github.event.inputs.game_name }}"
+          VERSION="${{ github.event.inputs.game_version }}"
+          ./scripts/verify-djpak.sh "artifacts/${GAME}-${VERSION}.djpak"
+
+      - name: List artifacts
+        run: ls -lh artifacts/
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: game-packages
+          path: artifacts/*
+
+  create-release:
+    name: Create GitHub Release
+    needs: [package]
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.create_release == 'true' }}
+    permissions:
+      contents: write
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: game-packages
+          path: artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.game_name }}-v${{ github.event.inputs.game_version }}
+          name: "${{ github.event.inputs.game_name }} v${{ github.event.inputs.game_version }}"
+          body: |
+            ## ${{ github.event.inputs.game_name }} v${{ github.event.inputs.game_version }}
+
+            Built for DJ-Engine v${{ github.event.inputs.engine_version }} from [DJ-Engine@${{ github.event.inputs.engine_ref }}](https://github.com/djmsqrvve/DJ-Engine/tree/${{ github.event.inputs.engine_ref }}).
+
+            ### Downloads
+
+            | Format | Description |
+            |--------|-------------|
+            | `.djpak` | Playable package — run with `dj_engine --play <file>` |
+            | `.djproj` | Editable project — open with `dj_engine --open <file>` |
+
+            ### How to Play
+
+            1. Download the latest DJ-Engine binary from the [engine releases](../../releases)
+            2. Download the `.djpak` file from this release
+            3. Run: `./dj_engine --play ${{ github.event.inputs.game_name }}-${{ github.event.inputs.game_version }}.djpak`
+          files: artifacts/*
+          draft: false
+          prerelease: false

@@ -1,0 +1,178 @@
+name: Release Engine Binaries
+
+# Manual trigger only — avoids GitHub Actions billing costs.
+# To re-enable automatic triggers, uncomment the push/pull_request sections below.
+on:
+  # push:
+  #   tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      engine_ref:
+        description: 'DJ-Engine repo ref (branch, tag, or commit SHA)'
+        required: true
+        default: 'main'
+      version:
+        description: 'Release version tag (e.g. 0.1.0)'
+        required: true
+        default: '0.1.0'
+      create_release:
+        description: 'Create a GitHub Release with binaries attached'
+        type: boolean
+        default: true
+
+env:
+  CARGO_TARGET_DIR: /home/runner/.cargo-targets/dj_engine_bevy18
+  RUSTC_WRAPPER: ""
+
+jobs:
+  build-linux:
+    name: Build Linux Binary
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out releases repo
+        uses: actions/checkout@v4
+
+      - name: Check out DJ-Engine
+        uses: actions/checkout@v4
+        with:
+          repository: djmsqrvve/DJ-Engine
+          ref: ${{ github.event.inputs.engine_ref }}
+          path: DJ-Engine
+
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            pkg-config libasound2-dev libudev-dev libwayland-dev \
+            libxkbcommon-dev libxkbcommon-x11-dev libxcursor-dev \
+            libxi-dev libxrandr-dev libxinerama-dev libx11-dev \
+            libx11-xcb-dev libgl1-mesa-dev libvulkan-dev \
+            libxcb1-dev libxcb-render0-dev libxcb-shape0-dev \
+            libxcb-xfixes0-dev clang lld cmake git
+
+      - name: Install pinned Rust toolchain
+        run: |
+          rustup toolchain install 1.94.0 --profile minimal
+          rustup default 1.94.0
+
+      - name: Restore Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: DJ-Engine -> /home/runner/.cargo-targets/dj_engine_bevy18
+
+      - name: Build Linux binary (release)
+        working-directory: DJ-Engine
+        run: cargo build -p dj_engine --bin dj_engine --release --no-default-features
+
+      - name: Stage Linux binary
+        run: |
+          mkdir -p artifacts
+          cp ${{ env.CARGO_TARGET_DIR }}/release/dj_engine artifacts/dj_engine-${{ github.event.inputs.version }}-linux-x86_64
+          chmod +x artifacts/dj_engine-${{ github.event.inputs.version }}-linux-x86_64
+          ls -lh artifacts/
+
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dj-engine-linux
+          path: artifacts/dj_engine-*
+
+  build-windows:
+    name: Build Windows Binary
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out releases repo
+        uses: actions/checkout@v4
+
+      - name: Check out DJ-Engine
+        uses: actions/checkout@v4
+        with:
+          repository: djmsqrvve/DJ-Engine
+          ref: ${{ github.event.inputs.engine_ref }}
+          path: DJ-Engine
+
+      - name: Install build dependencies (Linux + MinGW cross-compile)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            pkg-config libasound2-dev libudev-dev libwayland-dev \
+            libxkbcommon-dev libxkbcommon-x11-dev libxcursor-dev \
+            libxi-dev libxrandr-dev libxinerama-dev libx11-dev \
+            libx11-xcb-dev libgl1-mesa-dev libvulkan-dev \
+            libxcb1-dev libxcb-render0-dev libxcb-shape0-dev \
+            libxcb-xfixes0-dev clang lld cmake git \
+            gcc-mingw-w64-x86-64
+
+      - name: Install pinned Rust toolchain + Windows target
+        run: |
+          rustup toolchain install 1.94.0 --profile minimal
+          rustup default 1.94.0
+          rustup target add x86_64-pc-windows-gnu
+
+      - name: Restore Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: DJ-Engine -> /home/runner/.cargo-targets/dj_engine_bevy18
+
+      - name: Build Windows .exe (cross-compile, release)
+        working-directory: DJ-Engine
+        run: cargo build -p dj_engine --bin dj_engine --release --no-default-features --target x86_64-pc-windows-gnu
+
+      - name: Stage Windows binary
+        run: |
+          mkdir -p artifacts
+          cp ${{ env.CARGO_TARGET_DIR }}/x86_64-pc-windows-gnu/release/dj_engine.exe artifacts/dj_engine-${{ github.event.inputs.version }}-windows-x86_64.exe
+          ls -lh artifacts/
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dj-engine-windows
+          path: artifacts/dj_engine-*
+
+  create-release:
+    name: Create GitHub Release
+    needs: [build-linux, build-windows]
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.create_release == 'true' }}
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: List artifacts
+        run: ls -lhR artifacts/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.event.inputs.version }}
+          name: DJ-Engine v${{ github.event.inputs.version }}
+          body: |
+            ## DJ-Engine v${{ github.event.inputs.version }}
+
+            Built from [DJ-Engine@${{ github.event.inputs.engine_ref }}](https://github.com/djmsqrvve/DJ-Engine/tree/${{ github.event.inputs.engine_ref }}).
+
+            ### Downloads
+
+            | Platform | File |
+            |----------|------|
+            | Windows x86_64 | `dj_engine-${{ github.event.inputs.version }}-windows-x86_64.exe` |
+            | Linux x86_64 | `dj_engine-${{ github.event.inputs.version }}-linux-x86_64` |
+
+            ### Quick Start
+
+            ```bash
+            # Play a game
+            ./dj_engine --play game.djpak
+
+            # Open a project in the editor
+            ./dj_engine --open project.djproj
+            ```
+          files: artifacts/*
+          draft: false
+          prerelease: false

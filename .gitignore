@@ -1,0 +1,23 @@
+# Build artifacts
+releases/*.exe
+releases/*.djproj
+releases/*.djpak
+releases/dj_engine
+releases/dj_engine-*
+
+# Temp packaging dirs
+.package-tmp/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Rust build artifacts (if building locally)
+target/

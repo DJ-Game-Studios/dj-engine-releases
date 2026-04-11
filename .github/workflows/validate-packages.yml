@@ -1,0 +1,159 @@
+name: Validate Packages
+
+# Manual trigger only — avoids GitHub Actions billing costs.
+on:
+  workflow_dispatch:
+    inputs:
+      test_packaging:
+        description: 'Run end-to-end packaging test using DJ-Engine source'
+        type: boolean
+        default: true
+      engine_ref:
+        description: 'DJ-Engine repo ref for test packaging'
+        required: false
+        default: 'main'
+
+jobs:
+  validate-scripts:
+    name: Validate Packaging Scripts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out releases repo
+        uses: actions/checkout@v4
+
+      - name: Validate shell scripts (shellcheck)
+        run: |
+          # Install shellcheck if not present
+          which shellcheck || sudo apt-get install -y shellcheck
+          echo "=== Checking packaging scripts ==="
+          shellcheck scripts/package-djproj.sh || true
+          shellcheck scripts/package-djpak.sh || true
+          shellcheck scripts/verify-djpak.sh || true
+          shellcheck scripts/build-engine.sh || true
+          echo "=== Shellcheck complete ==="
+
+      - name: Make scripts executable
+        run: chmod +x scripts/*.sh
+
+      - name: Test with synthetic project
+        run: |
+          echo "=== Creating synthetic test project ==="
+          mkdir -p /tmp/test-project/{scenes,story_graphs,database,assets/audio,assets/music,data}
+
+          # Create project.json
+          cat > /tmp/test-project/project.json << 'EOF'
+          {
+            "id": "test-project-001",
+            "name": "Test Project",
+            "version": "0.1.0",
+            "settings": {
+              "platforms": ["pc"],
+              "default_resolution": {"width": 1280, "height": 720},
+              "target_fps": 60,
+              "vsync": true,
+              "pixel_perfect": true,
+              "input_profile": "jrpg",
+              "localization": {"languages": ["en"], "default_language": "en"},
+              "paths": {
+                "scenes": "scenes",
+                "story_graphs": "story_graphs",
+                "database": "database",
+                "assets": "assets",
+                "data": "data"
+              },
+              "startup": {
+                "default_scene_id": "test_scene",
+                "default_story_graph_id": "test_graph"
+              },
+              "autosave": {"enabled": true, "interval_seconds": 300, "max_backups": 10}
+            },
+            "editor_preferences": {
+              "theme": "dark", "ui_scale": 1.0, "font_size": 14,
+              "grid_size": {"width": 32, "height": 32},
+              "snap": {"position": 16.0, "rotation": 15.0, "scale": 0.25, "enabled": true},
+              "default_gizmo_mode": "move", "keybindings": {}, "layout_preset": "jrpg_mapping"
+            },
+            "scenes": [{"id": "test_scene", "path": "scenes/test_scene.json"}],
+            "story_graphs": [{"id": "test_graph", "path": "story_graphs/test_graph.json"}]
+          }
+          EOF
+
+          # Create scene
+          cat > /tmp/test-project/scenes/test_scene.json << 'EOF'
+          {
+            "id": "test_scene", "name": "Test Scene", "scene_type": "jrpg",
+            "size_tiles": {"width": 20, "height": 15},
+            "tile_size": {"width": 32, "height": 32},
+            "background_color": [12, 12, 18, 255],
+            "default_spawn": {"player": {"x": 320, "y": 240, "z": 10}, "camera": {"x": 320, "y": 240, "z": 999}},
+            "layers": [{"id": "ground", "name": "Ground", "z_order": 0}],
+            "entities": []
+          }
+          EOF
+
+          # Create story graph
+          cat > /tmp/test-project/story_graphs/test_graph.json << 'EOF'
+          {
+            "id": "test_graph", "name": "Test Graph", "root_node_id": "start",
+            "nodes": [
+              {"id": "start", "data": {"type": "start", "next_node_id": "end"}},
+              {"id": "end", "data": {"type": "end"}}
+            ]
+          }
+          EOF
+
+          echo "=== Testing .djproj packaging ==="
+          ./scripts/package-djproj.sh /tmp/test-project /tmp/test-output.djproj
+
+          echo ""
+          echo "=== Testing .djpak packaging ==="
+          ./scripts/package-djpak.sh /tmp/test-project /tmp/test-output.djpak --engine-version 0.1.0
+
+          echo ""
+          echo "=== Testing .djpak verification ==="
+          ./scripts/verify-djpak.sh /tmp/test-output.djpak
+
+          echo ""
+          echo "=== All validation tests passed ==="
+
+  e2e-packaging:
+    name: E2E Packaging Test (DJ-Engine Source)
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.test_packaging == 'true' }}
+    steps:
+      - name: Check out releases repo
+        uses: actions/checkout@v4
+
+      - name: Check out DJ-Engine
+        uses: actions/checkout@v4
+        with:
+          repository: djmsqrvve/DJ-Engine
+          ref: ${{ github.event.inputs.engine_ref }}
+          path: DJ-Engine
+
+      - name: Make scripts executable
+        run: chmod +x scripts/*.sh
+
+      - name: Generate project.json for doomexe
+        run: |
+          python3 scripts/generate-project-json.py DJ-Engine/games/dev/doomexe \
+            --name doomexe --version 0.1.0
+
+      - name: Package doomexe as .djproj
+        run: |
+          ./scripts/package-djproj.sh DJ-Engine/games/dev/doomexe /tmp/doomexe.djproj
+
+      - name: Package doomexe as .djpak
+        run: |
+          ./scripts/package-djpak.sh DJ-Engine/games/dev/doomexe /tmp/doomexe.djpak \
+            --engine-version 0.1.0
+
+      - name: Verify doomexe .djpak
+        run: |
+          ./scripts/verify-djpak.sh /tmp/doomexe.djpak
+
+      - name: Upload test packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-packages
+          path: /tmp/doomexe.*
