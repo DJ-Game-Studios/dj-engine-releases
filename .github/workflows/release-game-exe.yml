@@ -11,8 +11,8 @@ name: Release Game Standalone Binaries
 #
 # Prerequisites (one-time setup):
 #   1. Create a fine-grained PAT with:
-#        - Contents:read  on djmsqrvve/DJ-Engine
-#        - Contents:write on djmsqrvve/dj-engine-releases
+#        - Contents:read  on DJ-Game-Studios/DJ-Engine
+#        - Contents:write on DJ-Game-Studios/dj-engine-releases
 #   2. Store it as repo secret DJENGINE_RELEASE_PAT in dj-engine-releases.
 
 on:
@@ -100,7 +100,7 @@ jobs:
       - name: Checkout DJ-Engine source
         uses: actions/checkout@v4
         with:
-          repository: djmsqrvve/DJ-Engine
+          repository: DJ-Game-Studios/DJ-Engine
           ref: ${{ needs.derive.outputs.engine_ref }}
           path: DJ-Engine
           token: ${{ secrets.DJENGINE_RELEASE_PAT }}
@@ -228,7 +228,7 @@ jobs:
 
           Standalone self-contained binary for **${GAME}** — no engine download required.
 
-          Built from [DJ-Engine@${ENGINE_REF}](https://github.com/djmsqrvve/DJ-Engine/tree/${ENGINE_REF}) with \`--no-default-features\` (bevy dynamic linking disabled).
+          Built from [DJ-Engine@${ENGINE_REF}](https://github.com/DJ-Game-Studios/DJ-Engine/tree/${ENGINE_REF}) with \`--no-default-features\` (bevy dynamic linking disabled).
 
           ### Downloads
 

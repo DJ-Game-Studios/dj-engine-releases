@@ -44,7 +44,7 @@ jobs:
       - name: Check out DJ-Engine (for game source and project data)
         uses: actions/checkout@v4
         with:
-          repository: djmsqrvve/DJ-Engine
+          repository: DJ-Game-Studios/DJ-Engine
           ref: ${{ github.event.inputs.engine_ref }}
           path: DJ-Engine
 
@@ -137,7 +137,7 @@ jobs:
           body: |
             ## ${{ github.event.inputs.game_name }} v${{ github.event.inputs.game_version }}
 
-            Built for DJ-Engine v${{ github.event.inputs.engine_version }} from [DJ-Engine@${{ github.event.inputs.engine_ref }}](https://github.com/djmsqrvve/DJ-Engine/tree/${{ github.event.inputs.engine_ref }}).
+            Built for DJ-Engine v${{ github.event.inputs.engine_version }} from [DJ-Engine@${{ github.event.inputs.engine_ref }}](https://github.com/DJ-Game-Studios/DJ-Engine/tree/${{ github.event.inputs.engine_ref }}).
 
             ### Downloads
 
