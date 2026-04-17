@@ -1,0 +1,262 @@
+name: Release Game Standalone Binaries
+
+# Sibling to release-game.yml, which packages games as .djpak/.djproj.
+# This workflow ships standalone self-contained executables (Linux + Windows)
+# of a DJ-Engine game crate — no engine download required, one file to run.
+#
+# Tag namespace: ${game_name}-v${version}  (e.g. doomexe-v0.1.0)
+# Releases created here coexist with .djpak/.djproj releases from
+# release-game.yml that use the same tag — softprops/action-gh-release will
+# append files to an existing release when rerun on the same tag.
+#
+# Prerequisites (one-time setup):
+#   1. Create a fine-grained PAT with:
+#        - Contents:read  on djmsqrvve/DJ-Engine
+#        - Contents:write on djmsqrvve/dj-engine-releases
+#   2. Store it as repo secret DJENGINE_RELEASE_PAT in dj-engine-releases.
+
+on:
+  workflow_dispatch:
+    inputs:
+      game_name:
+        description: 'Game crate name (must exist at DJ-Engine/games/dev/<name>/)'
+        required: true
+        default: 'doomexe'
+      game_version:
+        description: 'Game version (semver without v-prefix)'
+        required: true
+        default: '0.1.0'
+      engine_ref:
+        description: 'DJ-Engine ref to build from (branch, tag, or SHA)'
+        required: true
+        default: 'main'
+      create_release:
+        description: 'Create (or append to) GitHub Release'
+        type: boolean
+        default: true
+  push:
+    tags:
+      - 'doomexe-v*'
+      - 'stratego-v*'
+      - 'iso_sandbox-v*'
+      - 'rpg_demo-v*'
+      - 'helix_rpg-v*'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  derive:
+    name: Derive inputs from tag or dispatch
+    runs-on: ubuntu-latest
+    outputs:
+      game_name: ${{ steps.derive.outputs.game_name }}
+      game_version: ${{ steps.derive.outputs.game_version }}
+      engine_ref: ${{ steps.derive.outputs.engine_ref }}
+      tag: ${{ steps.derive.outputs.tag }}
+    steps:
+      - id: derive
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            TAG="${GITHUB_REF_NAME}"          # e.g. doomexe-v0.1.0
+            GAME="${TAG%-v*}"                   # doomexe
+            VER="${TAG#*-v}"                    # 0.1.0
+            echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+            echo "game_name=$GAME" >> "$GITHUB_OUTPUT"
+            echo "game_version=$VER" >> "$GITHUB_OUTPUT"
+            echo "engine_ref=main" >> "$GITHUB_OUTPUT"
+          else
+            GAME="${{ github.event.inputs.game_name }}"
+            VER="${{ github.event.inputs.game_version }}"
+            echo "tag=${GAME}-v${VER}" >> "$GITHUB_OUTPUT"
+            echo "game_name=$GAME" >> "$GITHUB_OUTPUT"
+            echo "game_version=$VER" >> "$GITHUB_OUTPUT"
+            echo "engine_ref=${{ github.event.inputs.engine_ref }}" >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    name: Build ${{ needs.derive.outputs.game_name }} (${{ matrix.name }})
+    needs: derive
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            name: linux-x64
+            bin: ""                # no .exe suffix on Linux
+            archive_ext: tar.gz
+          - os: windows-latest
+            name: windows-x64
+            bin: ".exe"
+            archive_ext: zip
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout releases repo
+        uses: actions/checkout@v4
+        with:
+          path: dj-engine-releases
+
+      - name: Checkout DJ-Engine source
+        uses: actions/checkout@v4
+        with:
+          repository: djmsqrvve/DJ-Engine
+          ref: ${{ needs.derive.outputs.engine_ref }}
+          path: DJ-Engine
+          token: ${{ secrets.DJENGINE_RELEASE_PAT }}
+
+      - name: Confirm game crate exists
+        shell: bash
+        run: |
+          GAME="${{ needs.derive.outputs.game_name }}"
+          if [ ! -f "DJ-Engine/games/dev/$GAME/Cargo.toml" ]; then
+            echo "::error::No crate at DJ-Engine/games/dev/$GAME/Cargo.toml"
+            exit 1
+          fi
+          echo "Found: DJ-Engine/games/dev/$GAME/Cargo.toml"
+
+      - name: Install Linux system dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update && sudo apt-get install -y --no-install-recommends \
+            pkg-config libasound2-dev libudev-dev libwayland-dev \
+            libxkbcommon-dev libxkbcommon-x11-dev libxcursor-dev \
+            libxi-dev libxrandr-dev libxinerama-dev libx11-dev \
+            libx11-xcb-dev libgl1-mesa-dev libvulkan-dev \
+            libxcb1-dev libxcb-render0-dev libxcb-shape0-dev \
+            libxcb-xfixes0-dev clang lld cmake git
+
+      - name: Install Rust (pinned)
+        run: |
+          rustup toolchain install 1.94.0 --profile minimal
+          rustup default 1.94.0
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: DJ-Engine -> target
+          key: ${{ matrix.name }}-gameexe-${{ needs.derive.outputs.game_name }}
+
+      - name: Build release binary (no-default-features)
+        shell: bash
+        working-directory: DJ-Engine
+        run: |
+          GAME="${{ needs.derive.outputs.game_name }}"
+          # --no-default-features drops bevy/dynamic_linking so the produced
+          # binary is self-contained. Matches `make release-smoke`.
+          cargo build -p "$GAME" --release --no-default-features
+
+      - name: Stage artifact
+        shell: bash
+        run: |
+          GAME="${{ needs.derive.outputs.game_name }}"
+          VER="${{ needs.derive.outputs.game_version }}"
+          SUFFIX="${{ matrix.bin }}"
+          SRC="DJ-Engine/target/release/${GAME}${SUFFIX}"
+          mkdir -p dist
+          if [ ! -f "$SRC" ]; then
+            echo "::error::Expected binary not found: $SRC"
+            ls -la DJ-Engine/target/release/ || true
+            exit 1
+          fi
+          cp "$SRC" "dist/${GAME}${SUFFIX}"
+          # Include assets/ so the game is actually runnable on user machines.
+          if [ -d "DJ-Engine/games/dev/${GAME}/assets" ]; then
+            cp -r "DJ-Engine/games/dev/${GAME}/assets" dist/assets
+          fi
+          # Include README + license for distribution clarity.
+          [ -f "DJ-Engine/games/dev/${GAME}/README.md" ] && \
+            cp "DJ-Engine/games/dev/${GAME}/README.md" dist/README.md
+          [ -f "DJ-Engine/LICENSE" ] && cp "DJ-Engine/LICENSE" dist/LICENSE
+          ls -la dist/
+
+      - name: Package (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
+        run: |
+          GAME="${{ needs.derive.outputs.game_name }}"
+          VER="${{ needs.derive.outputs.game_version }}"
+          NAME="${GAME}-${VER}-linux-x64.tar.gz"
+          tar -czvf "$NAME" -C dist .
+          echo "ARCHIVE=$NAME" >> "$GITHUB_ENV"
+
+      - name: Package (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $Game = "${{ needs.derive.outputs.game_name }}"
+          $Ver  = "${{ needs.derive.outputs.game_version }}"
+          $Name = "$Game-$Ver-windows-x64.zip"
+          Compress-Archive -Path dist/* -DestinationPath $Name
+          echo "ARCHIVE=$Name" >> $env:GITHUB_ENV
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}
+          path: |
+            ${{ env.ARCHIVE }}
+            dist/${{ needs.derive.outputs.game_name }}${{ matrix.bin }}
+          if-no-files-found: error
+
+  publish:
+    name: Publish release
+    needs: [derive, build]
+    if: ${{ github.event.inputs.create_release == 'true' || github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: List artifacts
+        run: find artifacts -type f -ls
+
+      - name: Build release body
+        shell: bash
+        run: |
+          GAME="${{ needs.derive.outputs.game_name }}"
+          VER="${{ needs.derive.outputs.game_version }}"
+          ENGINE_REF="${{ needs.derive.outputs.engine_ref }}"
+          cat > release_body.md <<EOF
+          ## ${GAME} v${VER}
+
+          Standalone self-contained binary for **${GAME}** — no engine download required.
+
+          Built from [DJ-Engine@${ENGINE_REF}](https://github.com/djmsqrvve/DJ-Engine/tree/${ENGINE_REF}) with \`--no-default-features\` (bevy dynamic linking disabled).
+
+          ### Downloads
+
+          | Artifact | Platform | Notes |
+          |----------|----------|-------|
+          | \`${GAME}-${VER}-linux-x64.tar.gz\` | Linux x86_64 | \`chmod +x ${GAME}\` then \`./${GAME}\` |
+          | \`${GAME}-${VER}-windows-x64.zip\` | Windows x86_64 | Extract and double-click \`${GAME}.exe\` |
+
+          ### Running
+
+          1. Download the archive for your platform
+          2. Extract anywhere (keep \`assets/\` next to the binary)
+          3. Run the binary
+
+          No GameJolt, Steam, or launcher required.
+          EOF
+          cat release_body.md
+
+      - name: Publish / append to release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.derive.outputs.tag }}
+          name: ${{ needs.derive.outputs.game_name }} v${{ needs.derive.outputs.game_version }}
+          body_path: release_body.md
+          draft: false
+          prerelease: false
+          files: |
+            artifacts/linux-x64/*.tar.gz
+            artifacts/windows-x64/*.zip
+          # Default token has contents:write on *this* repo, which is where we publish.
+          token: ${{ secrets.GITHUB_TOKEN }}
