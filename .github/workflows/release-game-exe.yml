@@ -146,6 +146,24 @@ jobs:
           # binary is self-contained. Matches `make release-smoke`.
           cargo build -p "$GAME" --release --no-default-features
 
+      # --- Phase R6: License-class pre-publish gate (not-yet-applicable) --
+      # Rationale: dj-engine games currently ship raw SVG/PNG asset trees
+      # without per-file license.class attestation. Phase Y's gate applies
+      # only to .helix packages/bundles. When doomexe (or any game crate
+      # under DJ-Engine/games/dev/) adopts either:
+      #   (a) sidecar assets/license.json with per-file license.class, OR
+      #   (b) .helix-bundle packaging of its asset tree
+      # ... fill in the verify call here. Until then, emit an explicit
+      # "gate skipped" notice so the absence is visible in build logs.
+      - name: License-class gate (skipped — not applicable to raw asset trees)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          echo "::notice::License-class gate skipped: $GAME ships raw asset tree."
+          echo "::notice::See master-track/releases/planning/R6-license-gate-workflow-patches.md §Patch 2."
+          echo "::notice::Track: DJ-Engine games adopt license.json sidecar or .helix packaging."
+        env:
+          GAME: ${{ needs.derive.outputs.game_name }}
+
       - name: Stage artifact
         shell: bash
         run: |
