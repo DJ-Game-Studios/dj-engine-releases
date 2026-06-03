@@ -147,6 +147,9 @@ manifest = {
     "story_graphs": project.get("story_graphs", []),
     "packed_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
     "source_project_id": project.get("id", "unknown"),
+    # Data-driven title-screen theme, carried verbatim (None if unauthored) so
+    # a game's title is fully data-authored through the .djpak.
+    "title": settings.get("title"),
 }
 
 with open(output_path, "w") as f:
