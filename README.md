@@ -51,7 +51,7 @@ A single-file packaged game intended for distribution:
 dj_engine.exe path/to/game.djpak
 ```
 
-See the [format specification](spec/DJ_PROJECT_SPEC.md) and [integration guide](INTEGRATION.md) for technical details.
+Read the [`.djproj` project specification](spec/DJPROJ_FORMAT.md), [`.djpak` package specification](spec/DJPAK_FORMAT.md), and [integration guide](INTEGRATION.md) for technical details.
 
 ## Feedback
 
