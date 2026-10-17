@@ -1,5 +1,7 @@
 # DJ-Engine Releases
 
+GitHub Actions execution is retired. Run `make validate-local` for maintained local package checks; see [local validation](docs/LOCAL_ACTIONS_RETIREMENT.md). Historical workflow YAML is retained outside the runnable directory. Building or publishing a release still requires its own scope.
+
 Public downloads for **DJ-Engine** and games built with it.
 
 DJ-Engine is a custom Rust game engine created by [DJ Game Studios](https://github.com/DJ-Game-Studios) for stylized 2D games, editor-driven workflows, and portable game packages.

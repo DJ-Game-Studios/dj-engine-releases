@@ -100,3 +100,7 @@ clean: ## Remove staged release artifacts
 	@rm -rf $(OUTPUT_DIR)/dj_engine $(OUTPUT_DIR)/dj_engine-*
 	@rm -rf .package-tmp/
 	@echo "Done."
+
+.PHONY: validate-local
+validate-local: ## Run local source, ShellCheck and synthetic package validation
+	python3 scripts/validate-packages-local.py

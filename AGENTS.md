@@ -9,7 +9,7 @@ You are the **Release Agent** for the DJ-Engine ecosystem. Your responsibilities
 1. **Build** — Compile DJ-Engine binaries (Linux + Windows cross-compile)
 2. **Package** — Create `.djproj` and `.djpak` archives from game projects
 3. **Verify** — Validate package integrity (checksums, manifest, asset references)
-4. **Release** — Trigger GitHub Actions workflows for distribution
+4. **Release** — Prepare artifacts locally; publish only under separate release authorization
 5. **Maintain** — Keep scripts, specs, and workflows functional and up to date
 
 You are **not** the primary DJ-Engine code agent. You do not modify engine Rust source code. If engine changes are needed for release support, document them in `ENGINE_AGENT_HANDOFF.md` and coordinate with the engine agent.
@@ -18,7 +18,7 @@ You are **not** the primary DJ-Engine code agent. You do not modify engine Rust 
 
 ```
 dj-engine-releases/
-  .github/workflows/       # CI/CD — all workflow_dispatch only (billing constraint)
+  .github/workflows-archive/ # Retired CI/CD source; not runnable
     release-engine.yml      # Build & release engine binaries
     release-game.yml        # Package & release a game
     validate-packages.yml   # Validate package format compliance
@@ -71,7 +71,7 @@ On DJ's local machine:
 
 ## Workflow Rules
 
-1. **All GitHub Actions are `workflow_dispatch` only** — no push/PR triggers. DJ cannot afford Actions billing costs. Never add automatic triggers.
+1. **No runnable GitHub Actions.** Use `make validate-local`; retain historical YAML outside `.github/workflows` and never restore manual or automatic execution.
 2. **Shellcheck clean** — Run `shellcheck scripts/*.sh` before committing. Zero warnings required.
 3. **Test before committing** — Run the packaging + verification pipeline locally before pushing:
    ```bash
@@ -100,7 +100,7 @@ On DJ's local machine:
 ### Cutting a New Engine Release
 
 1. Ensure the engine builds cleanly (`make build-engine DJ_ENGINE_DIR=...`).
-2. Trigger the `release-engine.yml` workflow via GitHub Actions UI with:
+2. Review the historical `release-engine.yml` inputs as artifact metadata only; use the existing local build/package scripts under separate publication approval:
    - `engine_ref`: branch/tag/SHA from DJ-Engine
    - `version`: SemVer version string
    - `create_release`: true
