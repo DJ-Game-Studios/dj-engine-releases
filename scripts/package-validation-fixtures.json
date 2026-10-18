@@ -1,0 +1,131 @@
+{
+  "project.json": {
+    "id": "test-project-001",
+    "name": "Test Project",
+    "version": "0.1.0",
+    "settings": {
+      "platforms": [
+        "pc"
+      ],
+      "default_resolution": {
+        "width": 1280,
+        "height": 720
+      },
+      "target_fps": 60,
+      "vsync": true,
+      "pixel_perfect": true,
+      "input_profile": "jrpg",
+      "localization": {
+        "languages": [
+          "en"
+        ],
+        "default_language": "en"
+      },
+      "paths": {
+        "scenes": "scenes",
+        "story_graphs": "story_graphs",
+        "database": "database",
+        "assets": "assets",
+        "data": "data"
+      },
+      "startup": {
+        "default_scene_id": "test_scene",
+        "default_story_graph_id": "test_graph"
+      },
+      "autosave": {
+        "enabled": true,
+        "interval_seconds": 300,
+        "max_backups": 10
+      }
+    },
+    "editor_preferences": {
+      "theme": "dark",
+      "ui_scale": 1.0,
+      "font_size": 14,
+      "grid_size": {
+        "width": 32,
+        "height": 32
+      },
+      "snap": {
+        "position": 16.0,
+        "rotation": 15.0,
+        "scale": 0.25,
+        "enabled": true
+      },
+      "default_gizmo_mode": "move",
+      "keybindings": {},
+      "layout_preset": "jrpg_mapping"
+    },
+    "scenes": [
+      {
+        "id": "test_scene",
+        "path": "scenes/test_scene.json"
+      }
+    ],
+    "story_graphs": [
+      {
+        "id": "test_graph",
+        "path": "story_graphs/test_graph.json"
+      }
+    ]
+  },
+  "scenes/test_scene.json": {
+    "id": "test_scene",
+    "name": "Test Scene",
+    "scene_type": "jrpg",
+    "size_tiles": {
+      "width": 20,
+      "height": 15
+    },
+    "tile_size": {
+      "width": 32,
+      "height": 32
+    },
+    "background_color": [
+      12,
+      12,
+      18,
+      255
+    ],
+    "default_spawn": {
+      "player": {
+        "x": 320,
+        "y": 240,
+        "z": 10
+      },
+      "camera": {
+        "x": 320,
+        "y": 240,
+        "z": 999
+      }
+    },
+    "layers": [
+      {
+        "id": "ground",
+        "name": "Ground",
+        "z_order": 0
+      }
+    ],
+    "entities": []
+  },
+  "story_graphs/test_graph.json": {
+    "id": "test_graph",
+    "name": "Test Graph",
+    "root_node_id": "start",
+    "nodes": [
+      {
+        "id": "start",
+        "data": {
+          "type": "start",
+          "next_node_id": "end"
+        }
+      },
+      {
+        "id": "end",
+        "data": {
+          "type": "end"
+        }
+      }
+    ]
+  }
+}

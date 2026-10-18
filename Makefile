@@ -32,6 +32,7 @@ help: ## Show this help
 	@echo "  make package-djpak PROJECT_DIR=<path>     Package project as .djpak (playable)"
 	@echo "  make verify PACKAGE=<file.djpak>          Verify a .djpak integrity"
 	@echo "  make generate-project PROJECT_DIR=<path>  Generate project.json from game assets"
+	@echo "  make validate-local                      Check scripts and synthetic packages locally"
 	@echo "  make clean                                 Remove staged release artifacts"
 	@echo ""
 	@echo "Options:"
@@ -100,3 +101,7 @@ clean: ## Remove staged release artifacts
 	@rm -rf $(OUTPUT_DIR)/dj_engine $(OUTPUT_DIR)/dj_engine-*
 	@rm -rf .package-tmp/
 	@echo "Done."
+
+.PHONY: validate-local
+validate-local: ## Run local source, ShellCheck and synthetic package validation
+	python3 scripts/validate-packages-local.py

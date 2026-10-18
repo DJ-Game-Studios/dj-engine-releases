@@ -109,15 +109,15 @@ When you find a bug:
 5. **PR** — Create a PR targeting `main` with the fix and regression test description
 6. **Document** — Add the bug to the "Known Bugs" section above with symptom, root cause, and fix
 
-## CI Workflows
+## Local validation
 
-All workflows are `workflow_dispatch` only (manual trigger). No automatic triggers.
+All GitHub workflows are retired, including manual definitions. Run `make validate-local`; platform builds and real-product packaging remain separate qualification steps. Historical source is under `.github/workflows-archive/`.
 
-| Workflow | What It Tests | When to Run |
+| Local command | What It Tests | When to Run |
 |----------|--------------|-------------|
-| `validate-packages.yml` | Full .djpak/.djproj validation | After script changes or format spec updates |
-| `release-engine.yml` | Engine compilation | Before cutting a release |
-| `release-game.yml` | Game packaging pipeline | Before distributing a game |
+| `make validate-local` | ShellCheck plus synthetic .djpak/.djproj packaging and integrity | After script changes or format spec updates |
+| `make build-engine DJ_ENGINE_DIR=...` | Engine compilation | Separately authorized release preparation |
+| `make package-djpak PROJECT_DIR=...` and `make package-djproj PROJECT_DIR=...` | Owned-project packaging | Separately authorized real-product qualification |
 
 ## Cross-Repo Testing
 

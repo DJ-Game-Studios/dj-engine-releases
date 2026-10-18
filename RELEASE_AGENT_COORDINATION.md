@@ -1,43 +1,28 @@
 # Release Agent Coordination
 
-This repo is a **public release channel** for DJ-Game-Studios. Cross-repo release work — pipeline wiring, secret arming, stale-URL cleanup, storefront identity, PAT scoping — is coordinated by **`agent-release`**, whose workspace is at `~/dev/master-track/releases/`.
+This repository is a public release channel for DJ-Game-Studios. Product build and packaging scripts stay here; cross-product distribution and release records stay with the existing release owner in `/home/dj/dev/master-track/releases/`.
 
-## Where to look first
+## Current maintenance state — 2026-10-17
 
-- Agent workspace: `~/dev/master-track/releases/`
-- Agent brief: `~/dev/master-track/releases/RELEASE_AGENT_BRIEF.md`
-- Operating rules: `~/dev/master-track/releases/CLAUDE.md`
-- Release state (canonical): `~/dev/master-track/data/releases.json` (products: `dj-engine`, `doomexe`)
-- **Latest discovery audit: `~/dev/master-track/releases/docs/audits/2026-04-17-discovery.md`** — read the sections tagged to this repo below.
+GitHub Actions execution is retired, including dispatch-only and tag-triggered releases. All four historical definitions are preserved under `.github/workflows-archive/`; use `make validate-local` and [the local release process](docs/RELEASE_PROCESS.md). Do not arm `DJENGINE_RELEASE_PAT`, restore workflow execution or create a tag as part of this cleanup.
 
-## Items flagged for this repo (2026-04-17 audit)
+The local gate covers blocking ShellCheck and synthetic `.djproj`/`.djpak` packaging with the existing `.djpak` integrity verifier. Actual engine builds, game behavior, platform binaries and publication need their own evidence and owner scope. Gameplay remains with the Helix agent.
 
-From the audit's gap-map. Each item names the audit section for the full context.
+Source retirement remains subject to this repository's required PR review. Local test success and administrative Actions disablement do not replace that review.
 
-### Must close before Phase 3 (DoomExe first release)
+## Canonical owner references
 
-- [ ] **~20 stale `djmsqrvve/*` URLs** across `README.md`, `INTEGRATION.md`, `ENGINE_AGENT_HANDOFF.md`, `AGENT_PROMPT_DJ_ENGINE.md`, `docs/RELEASE_PROCESS.md`, `docs/agents/sprint-batch-prompts.md`. Post-GHE migration (2026-04-16) left these pointing at the pre-migration owner. Shipping a release while README points at a dead URL is a footgun. (Audit §5.3)
-- [ ] **`DJENGINE_RELEASE_PAT` secret not armed** on this repo. All three release workflows (`release-engine.yml`, `release-game.yml`, `release-game-exe.yml`) depend on it. (Audit §3.3, §4)
-- [ ] **0 releases shipped** — `gh release list -R DJ-Game-Studios/dj-engine-releases` returns empty. Phase 3 target is `doomexe-v0.1.0` through `release-game-exe.yml`. (Audit §1)
+- Orchestrator playbook: `/home/dj/dev/master-track/docs/AGENT00_RELEASE_PLAYBOOK.md`
+- Release workspace rules: `/home/dj/dev/master-track/releases/CLAUDE.md`
+- Release brief: `/home/dj/dev/master-track/releases/RELEASE_AGENT_BRIEF.md`
+- Shipped-release records: `/home/dj/dev/master-track/data/releases.json`
+- Historical discovery audit: `/home/dj/dev/master-track/releases/docs/audits/2026-04-17-discovery.md`
 
-### Relevant context (no action in this repo)
+The workspace's April 25 instructions identify this as Agent 00's retained release-execution workspace. The earlier `agent-release` name and April audit are historical pointers. Reconcile current ownership and product state before future release work; the old audit's missing-secret and workflow-dispatch recommendations are superseded by the no-Actions policy.
 
-- `DJ-Game-Studios/DJ-Engine` has an unlogged public release `v0.1.0` from 2026-03-25 that predates the release pipeline. Release body contains a stale `djmsqrvve/` clone URL. Decision pending from DJ — see audit §5.1.
-- Workflows in this repo (`.github/workflows/release-*.yml`) are **load-bearing**. Do not edit without producing a diff for DJ first — same rule as `helix_3d`'s `release-viewer.yml`. (Audit §3.2)
-- Tag-namespace pattern for games in this umbrella is `${game}-v${ver}` (e.g. `doomexe-v0.1.0`), already wired into `release-game-exe.yml`. (Audit §3.2)
+## Release integrity
 
-## How to coordinate
-
-- Need a workflow change? Produce a diff, drop it in `~/dev/master-track/releases/handoffs/YYYY-MM-DD-<topic>.md`, tag `agent-release`.
-- Need to ship a release from this repo? That's a Phase 3 activity — don't cut the tag without walking through `~/dev/master-track/releases/runbooks/clone-dj-engine-releases.md` + the Phase 3 plan in `~/dev/master-track/releases/planning/ROADMAP.md`. Note: that clone-runbook is currently **stale** (this repo is already cloned at `/home/dj/dev/engines/dj-engine-releases/`).
-- Need to update `releases.json`? Append to `~/dev/master-track/data/releases.json` via `make log-release` in `~/dev/master-track/releases/`. Never force-push.
-
-## Non-negotiable
-
-- **Append-only artifacts.** No force-pushes to tags or release assets. Unpublishing requires an issue + DJ eyeball pass.
-- **No credentials in markdown.** `DJENGINE_RELEASE_PAT` lives in GitHub repo secrets + `~/dev/studio-ops/team/wggs-vault.kdbx` only.
-- **Scope matrix, not values.** Any PAT scope documentation goes in `~/dev/master-track/releases/secrets/RELEASE_SECRETS.md`.
-
----
-
-*This file is a pointer, not a source of truth. For anything substantive, the canonical document is the latest audit in `~/dev/master-track/releases/docs/audits/`.*
+- Publish only after DJ's release approval and the release owner's review of source revisions, artifacts, checksums and platform evidence.
+- Preserve append-only release history. No force pushes, replacement assets or unpublishing without the existing owner process.
+- Keep credentials out of Markdown. Maintenance does not require new credentials, token scopes or account linking.
+- Record an approved publication through the existing release owner; do not create a competing release ledger.

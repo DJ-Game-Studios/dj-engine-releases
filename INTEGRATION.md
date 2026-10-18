@@ -39,15 +39,15 @@
 1. **Compiles** DJ-Engine source into platform binaries (`dj_engine.exe`, `dj_engine`)
 2. **Packages** game projects into `.djproj` (editable) and `.djpak` (playable) archives
 3. **Verifies** package integrity (checksums, manifest validation, asset references)
-4. **Distributes** via GitHub Releases (workflow_dispatch triggered)
+4. **Distributes** reviewed local artifacts through separately authorized manual GitHub Releases
 
 ## Upstream Dependencies
 
 | Repo | What We Use | How |
 |------|------------|-----|
-| [DJ-Engine](https://github.com/djmsqrvve/DJ-Engine) | Engine Rust source | `build-engine.sh` compiles it into binaries |
-| [DJ-Engine](https://github.com/djmsqrvve/DJ-Engine) | Game project dirs (`games/dev/*`) | `package-djpak.sh` / `package-djproj.sh` package them |
-| [helix_standardization](https://github.com/djmsqrvve/helix_standardization) | Entity TOML data (indirect) | DJ-Engine consumes standardized data; we package the result |
+| [DJ-Engine](https://github.com/DJ-Game-Studios/DJ-Engine) | Engine Rust source | `build-engine.sh` compiles it into binaries |
+| [DJ-Engine](https://github.com/DJ-Game-Studios/DJ-Engine) | Game project dirs (`games/dev/*`) | `package-djpak.sh` / `package-djproj.sh` package them |
+| [helix_standardization](https://github.com/DJ-Game-Studios/helix_standardization) | Entity TOML data (indirect) | DJ-Engine consumes standardized data; we package the result |
 
 ## Downstream Consumers
 
@@ -135,9 +135,4 @@ See [spec/VERSION_COMPAT.md](spec/VERSION_COMPAT.md) for the full compatibility 
 
 ## Billing Constraint
 
-All GitHub Actions workflows in this repo and across the Helix ecosystem use `workflow_dispatch` only. **No automatic push/PR triggers.** This is a billing constraint — DJ cannot afford GitHub Actions costs. This applies to:
-- `release-engine.yml`
-- `release-game.yml`
-- `validate-packages.yml`
-
-When the user has Actions credits again, triggers can be re-enabled (see comments in workflow files).
+GitHub Actions execution is retired for this repository, including manual workflows. Use `make validate-local` and the existing local build/package scripts. Historical definitions are retained under `.github/workflows-archive/`; they must not be dispatched or restored. Release publication and platform qualification remain separate owner gates.

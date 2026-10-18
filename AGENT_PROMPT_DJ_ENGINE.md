@@ -1,11 +1,13 @@
 # Agent Prompt: DJ-Engine — Project Format Support & Release Pipeline Integration
 
+> Historical engine implementation brief. Reconcile it with the active Helix agent before assigning work. Current maintenance uses `make validate-local`; GitHub Actions are retired. This cleanup does not authorize gameplay implementation or release publication.
+
 > This prompt is for the DJ-Engine repo agent to implement `.djproj` and `.djpak` format support,
 > CLI flags for loading packaged projects, and integration with the `dj-engine-releases` repo.
 
 ## Context
 
-DJ-Engine now has a companion release repository (`djmsqrvve/dj-engine-releases`) that handles:
+DJ-Engine now has a companion release repository (`DJ-Game-Studios/dj-engine-releases`) that handles:
 - Building and distributing compiled engine binaries (`.exe` / Linux)
 - Packaging games into two new `.dj` project formats
 
