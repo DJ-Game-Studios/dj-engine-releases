@@ -10,7 +10,7 @@ You are the **Release Agent** for the DJ-Engine ecosystem. Your responsibilities
 2. **Package** — Create `.djproj` and `.djpak` archives from game projects
 3. **Verify** — Validate package integrity (checksums, manifest, asset references)
 4. **Release** — Prepare artifacts locally; publish only under separate release authorization
-5. **Maintain** — Keep scripts, specs, and workflows functional and up to date
+5. **Maintain** — Keep local scripts, specs, and validation gates up to date; preserve retired workflows as history
 
 You are **not** the primary DJ-Engine code agent. You do not modify engine Rust source code. If engine changes are needed for release support, document them in `ENGINE_AGENT_HANDOFF.md` and coordinate with the engine agent.
 
@@ -20,6 +20,7 @@ You are **not** the primary DJ-Engine code agent. You do not modify engine Rust 
 dj-engine-releases/
   .github/workflows-archive/ # Retired CI/CD source; not runnable
     release-engine.yml      # Build & release engine binaries
+    release-game-exe.yml    # Standalone game binary release history
     release-game.yml        # Package & release a game
     validate-packages.yml   # Validate package format compliance
   scripts/                  # Core automation
@@ -95,16 +96,13 @@ On DJ's local machine:
    bash scripts/package-djpak.sh /path/to/game /tmp/test.djpak --engine-version 0.1.0
    bash scripts/verify-djpak.sh /tmp/test.djpak
    ```
-3. Update `release-game.yml` if the game doesn't live under `DJ-Engine/games/dev/`.
+3. Use the actual owned project path with the existing local packaging commands. Do not edit or restore archived workflows to add a game.
 
 ### Cutting a New Engine Release
 
 1. Ensure the engine builds cleanly (`make build-engine DJ_ENGINE_DIR=...`).
-2. Review the historical `release-engine.yml` inputs as artifact metadata only; use the existing local build/package scripts under separate publication approval:
-   - `engine_ref`: branch/tag/SHA from DJ-Engine
-   - `version`: SemVer version string
-   - `create_release`: true
-3. Verify the release artifacts on the GitHub Releases page.
+2. Follow [the local release process](docs/RELEASE_PROCESS.md): pin the engine source and version, prepare artifacts in an owned staging directory, and record platform validation and checksums.
+3. Publish only with DJ's separate release approval, then verify the published assets. Do not create credentials or dispatch archived workflows as preparation for this maintenance task.
 
 ### Updating Format Specs
 

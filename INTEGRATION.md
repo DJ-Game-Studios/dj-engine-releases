@@ -45,9 +45,9 @@
 
 | Repo | What We Use | How |
 |------|------------|-----|
-| [DJ-Engine](https://github.com/djmsqrvve/DJ-Engine) | Engine Rust source | `build-engine.sh` compiles it into binaries |
-| [DJ-Engine](https://github.com/djmsqrvve/DJ-Engine) | Game project dirs (`games/dev/*`) | `package-djpak.sh` / `package-djproj.sh` package them |
-| [helix_standardization](https://github.com/djmsqrvve/helix_standardization) | Entity TOML data (indirect) | DJ-Engine consumes standardized data; we package the result |
+| [DJ-Engine](https://github.com/DJ-Game-Studios/DJ-Engine) | Engine Rust source | `build-engine.sh` compiles it into binaries |
+| [DJ-Engine](https://github.com/DJ-Game-Studios/DJ-Engine) | Game project dirs (`games/dev/*`) | `package-djpak.sh` / `package-djproj.sh` package them |
+| [helix_standardization](https://github.com/DJ-Game-Studios/helix_standardization) | Entity TOML data (indirect) | DJ-Engine consumes standardized data; we package the result |
 
 ## Downstream Consumers
 

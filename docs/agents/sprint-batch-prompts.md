@@ -1,19 +1,19 @@
 # Agent Prompts for dj-engine-releases Sprint
 
-Below are ready-to-send prompts for each agent. Copy-paste the relevant section into a new Devin session.
+Historical April 11 sprint prompts, retained for design context. They are not current task assignments or product-readiness evidence. Gameplay remains with the existing Helix agent. Reconcile the owner, source revisions, toolchain and current task before reusing any prompt. The current maintenance gate is `make validate-local`; publication, installs and product builds require their own scope.
 
 ---
 
 ## Agent 1: DJ-Engine Agent — Format Loaders & CLI
 
-> **Repo:** `djmsqrvve/DJ-Engine`
+> **Repo:** `DJ-Game-Studios/DJ-Engine`
 > **Goal:** Implement `.djpak` and `.djproj` loading so `dj_engine --play doomexe.djpak` works end-to-end.
 > **Priority:** CRITICAL — this is the #1 sprint blocker.
 
 ### Prompt
 
 ```
-You are the DJ-Engine agent. Your job is to implement .djpak and .djproj format loading in the DJ-Engine repo (djmsqrvve/DJ-Engine).
+You are the DJ-Engine agent. Your job is to implement .djpak and .djproj format loading in the DJ-Engine repo (DJ-Game-Studios/DJ-Engine).
 
 ## Sprint Goal
 
@@ -31,7 +31,7 @@ The engine already has:
 - DoomExe game at `games/dev/doomexe/` with a working `project.json` (4 scenes, 2 story graphs)
 - Makefile with `make doomexe`, `make dev-exe` (Windows cross-compile), `make linux-exe`, `make quality-check`
 
-The companion repo `djmsqrvve/dj-engine-releases` has:
+The companion repo `DJ-Game-Studios/dj-engine-releases` has:
 - Full format specs: `spec/DJPAK_FORMAT.md`, `spec/DJPROJ_FORMAT.md`
 - Working packaging scripts that produce valid .djpak and .djproj files
 - A detailed implementation spec: `AGENT_PROMPT_DJ_ENGINE.md` — READ THIS FIRST
@@ -118,7 +118,7 @@ After implementing the above:
 
 ## Constraints
 
-- DO NOT add automatic GitHub Actions triggers (workflow_dispatch only — billing constraint)
+- DO NOT restore GitHub Actions execution, including manual jobs; use the maintained local gate
 - DO NOT break existing tests (2,097+). Run `make test` before committing.
 - DO NOT modify the Runtime Preview state machine — wire it to load from the extracted directory
 - DO keep zero clippy warnings. Run `make lint` before committing.
@@ -131,7 +131,7 @@ After implementing the above:
 
 Clone the releases repo and generate test packages:
 
-  git clone https://github.com/djmsqrvve/dj-engine-releases.git
+  git clone https://github.com/DJ-Game-Studios/dj-engine-releases.git
   bash dj-engine-releases/scripts/package-djpak.sh games/dev/doomexe /tmp/test.djpak --engine-version 0.1.0
   bash dj-engine-releases/scripts/package-djproj.sh games/dev/doomexe /tmp/test.djproj
   bash dj-engine-releases/scripts/verify-djpak.sh /tmp/test.djpak  # should pass
@@ -147,21 +147,21 @@ Use these to develop and test your loaders against real packages.
 
 ## Communication
 
-File issues or PR comments on djmsqrvve/dj-engine-releases if packages are malformed or specs need changes. The release agent monitors that repo.
+File issues or PR comments on DJ-Game-Studios/dj-engine-releases if packages are malformed or specs need changes. The release agent monitors that repo.
 ```
 
 ---
 
 ## Agent 2: DoomExe QA Agent — Release Readiness
 
-> **Repo:** `djmsqrvve/DJ-Engine`
+> **Repo:** `DJ-Game-Studios/DJ-Engine`
 > **Goal:** Verify DoomExe is content-complete and playable for a v0.1.0 release.
 > **Priority:** HIGH — runs in parallel with the Engine agent.
 
 ### Prompt
 
 ```
-You are the DoomExe QA agent. Your job is to verify that DoomExe (the hamster narrator JRPG) in djmsqrvve/DJ-Engine is release-ready for v0.1.0 packaging.
+You are the DoomExe QA agent. Your job is to verify that DoomExe (the hamster narrator JRPG) in DJ-Game-Studios/DJ-Engine is release-ready for v0.1.0 packaging.
 
 ## Context
 
@@ -220,9 +220,9 @@ Verify `games/dev/doomexe/project.json` is correct:
 - Settings match game requirements (1280x720, 60fps, jrpg input)
 
 ### 6. Packaging Dry Run
-Clone `djmsqrvve/dj-engine-releases` and test packaging:
+Clone `DJ-Game-Studios/dj-engine-releases` and test packaging:
 
-  git clone https://github.com/djmsqrvve/dj-engine-releases.git /tmp/releases
+  git clone https://github.com/DJ-Game-Studios/dj-engine-releases.git /tmp/releases
   bash /tmp/releases/scripts/package-djpak.sh games/dev/doomexe /tmp/doomexe.djpak --engine-version 0.1.0
   bash /tmp/releases/scripts/verify-djpak.sh /tmp/doomexe.djpak
   bash /tmp/releases/scripts/package-djproj.sh games/dev/doomexe /tmp/doomexe.djproj
@@ -230,7 +230,7 @@ Clone `djmsqrvve/dj-engine-releases` and test packaging:
 All three commands should succeed. If they fail, file issues on dj-engine-releases.
 
 ### 7. Bug Report
-Document any issues found as GitHub issues on djmsqrvve/DJ-Engine with labels:
+Document any issues found as GitHub issues on DJ-Game-Studios/DJ-Engine with labels:
 - `doomexe` — game-specific bugs
 - `release-blocker` — anything that prevents v0.1.0 packaging
 - `content` — missing or incomplete content
@@ -261,27 +261,28 @@ DoomExe v0.1.0 is release-ready when:
 
 ## Agent 3: Release Build Agent — Binary Compilation & Pipeline Validation
 
-> **Repo:** `djmsqrvve/dj-engine-releases`
-> **Goal:** Validate that `build-engine.sh` produces working binaries and CI workflows are correct.
+> **Repo:** `DJ-Game-Studios/dj-engine-releases`
+> **Goal:** Validate separately scoped local builds and packaging; keep historical workflows retired.
 > **Priority:** MEDIUM — can run in parallel with the other two agents.
 
 ### Prompt
 
 ```
-You are the Release Build agent. Your job is to validate the build pipeline in djmsqrvve/dj-engine-releases — making sure we can compile DJ-Engine binaries and that the CI workflows are correctly configured.
+You are the Release Build agent. Your job is to validate the build pipeline in DJ-Game-Studios/dj-engine-releases — making sure separately scoped local builds and packaging are qualified. GitHub Actions execution is retired.
 
 ## Context
 
-The dj-engine-releases repo has a build script and 3 GitHub Actions workflows that have never been tested against real builds. Your job is to validate them locally and fix any issues.
+The dj-engine-releases repo has local build/package scripts and four archived workflows. Start with `make validate-local`; actual engine and platform builds require the engine owner's current toolchain, build-admission rules and separately agreed scope. Never dispatch or restore archived workflows.
 
 ## What Exists
 
 - `scripts/build-engine.sh` — Cross-compiles DJ-Engine for Linux and Windows (LTO, stripped, versioned)
-- `.github/workflows/release-engine.yml` — Builds engine binaries (workflow_dispatch)
-- `.github/workflows/release-game.yml` — Packages games (workflow_dispatch)
-- `.github/workflows/validate-packages.yml` — Validates packaging scripts (workflow_dispatch)
+- `.github/workflows-archive/release-engine.yml` — Historical engine build/release source
+- `.github/workflows-archive/release-game.yml` — Historical package release source
+- `.github/workflows-archive/validate-packages.yml` — Historical package validation source
+- `.github/workflows-archive/release-game-exe.yml` — Historical standalone game release source
 - `Makefile` — Unified interface (`make build-engine`, `make package-djpak`, etc.)
-- DJ-Engine source at djmsqrvve/DJ-Engine (clone it for testing)
+- DJ-Engine source at DJ-Game-Studios/DJ-Engine (clone it for testing)
 
 ## Tasks
 
@@ -294,8 +295,8 @@ Install everything needed to build DJ-Engine:
 ### 2. Validate build-engine.sh
 Clone DJ-Engine and attempt a build:
 
-  git clone https://github.com/djmsqrvve/DJ-Engine.git /tmp/DJ-Engine
-  bash scripts/build-engine.sh /tmp/DJ-Engine ./dist --linux --windows
+  git clone https://github.com/DJ-Game-Studios/DJ-Engine.git /tmp/DJ-Engine
+  bash scripts/build-engine.sh /tmp/DJ-Engine --output-dir ./dist
 
 Expected output:
 - `dist/dj_engine` (Linux binary)
@@ -305,13 +306,8 @@ Expected output:
 
 Fix any issues in the build script (wrong cargo flags, missing env vars, path problems).
 
-### 3. Validate CI Workflow Syntax
-Check all 3 workflow files parse correctly:
-- Install actionlint or use `python3 -c "import yaml; yaml.safe_load(open(...))"` to validate YAML
-- Verify all `actions/*` references are pinned to specific versions
-- Verify runner images are correct (ubuntu-latest for linux, windows-latest for windows)
-- Verify workflow_dispatch inputs have correct types and defaults
-- Verify artifact upload/download steps match between jobs
+### 3. Validate the maintained local gate
+Run `make validate-local`. It rejects runnable Actions/Dependabot definitions, runs blocking ShellCheck and uses owned temporary synthetic fixtures with the existing packagers and five-stage `.djpak` verifier. Keep the four archived workflow definitions byte-preserved. This gate does not establish engine, game or platform readiness.
 
 ### 4. Write verify-djproj.sh
 We have `verify-djpak.sh` but no `.djproj` verification script. Create `scripts/verify-djproj.sh`:
@@ -332,11 +328,11 @@ Add a `verify-djproj` target to the Makefile.
 Run the complete pipeline locally:
 
   # Package DoomExe both ways
-  make package-djpak GAME_DIR=/tmp/DJ-Engine/games/dev/doomexe OUTPUT=dist/doomexe.djpak ENGINE_VERSION=0.1.0
-  make package-djproj GAME_DIR=/tmp/DJ-Engine/games/dev/doomexe OUTPUT=dist/doomexe.djproj
+  make package-djpak PROJECT_DIR=/absolute/path/to/owned-project OUTPUT_DIR=dist GAME_NAME=game GAME_VERSION=0.1.0 ENGINE_VERSION=0.1.0
+  make package-djproj PROJECT_DIR=/absolute/path/to/owned-project OUTPUT_DIR=dist GAME_NAME=game GAME_VERSION=0.1.0
 
   # Verify both packages
-  make verify-djpak PACKAGE=dist/doomexe.djpak
+  make verify PACKAGE=dist/game-0.1.0.djpak
   # (verify-djproj once you've written it)
 
   # Build engine
@@ -346,12 +342,12 @@ Run the complete pipeline locally:
 Create a build validation report listing:
 - What worked out of the box
 - What needed fixes (and what you fixed)
-- Any remaining issues for CI (things that work locally but might fail on GitHub runners)
+- Remaining local build or platform qualification issues, with exact source revisions and evidence
 - Recommended environment setup for future build agents
 
 ## Constraints
 
-- All GitHub Actions triggers MUST remain workflow_dispatch only (billing constraint). Add comments explaining how to re-enable auto-triggers when budget allows.
+- All GitHub Actions execution remains retired, including workflow_dispatch and tag-triggered jobs. Maintain local checks; do not restore archived workflows.
 - DO NOT force push to main
 - DO NOT modify packaging scripts unless fixing actual bugs
 - DO follow existing code style (shellcheck clean, set -euo pipefail)
@@ -360,7 +356,7 @@ Create a build validation report listing:
 ## Communication
 
 File issues on dj-engine-releases for any bugs found. Tag with `build`, `ci`, or `pipeline` labels.
-If you find issues in DJ-Engine source that prevent building, file issues on djmsqrvve/DJ-Engine.
+If you find issues in DJ-Engine source that prevent building, file issues on DJ-Game-Studios/DJ-Engine.
 ```
 
 ---
@@ -385,8 +381,8 @@ DJ-Engine Agent ──→ implements loaders ──→ E2E test with packages fr
 
 ### After All Three Complete
 
-Once all agents report done, you (DJ) or the release agent (me) can:
-1. Trigger `validate-packages.yml` on GitHub to prove CI works
-2. Trigger `release-engine.yml` to build v0.1.0 binaries
-3. Trigger `release-game.yml` to package DoomExe v0.1.0
-4. Test the final flow: download binary + .djpak → run → play
+After the current owners qualify their separately scoped work:
+1. Run `make validate-local` for the maintained source and synthetic package gate.
+2. Prepare and qualify actual platform binaries and owned game packages locally.
+3. Present source revisions, artifact checksums and platform evidence for DJ's separate publication approval.
+4. After approved publication, test the final download and play flow. Keep all archived workflows retired.

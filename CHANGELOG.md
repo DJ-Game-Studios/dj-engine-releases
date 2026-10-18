@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed — 2026-10-17
+- Retired all four GitHub Actions definitions as byte-preserved history outside the runnable directory.
+- Added `make validate-local` with blocking ShellCheck, owned synthetic fixtures and the existing package integrity checks.
+- Replaced workflow-dispatch and release-secret setup instructions with local preparation and separately approved manual publication.
+
 ### Added
 - Initial release repository structure
 - `.djproj` format specification (editable project archive)

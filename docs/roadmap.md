@@ -1,5 +1,9 @@
 # dj-engine-releases — Vision, Roadmap, Gaps, Blockers & Planning
 
+> Original planning snapshot: 2026-04-11. Engine tasks, package readiness and historical blockers below are not current product evidence. Reconcile them with the active Helix agent before assigning work.
+>
+> Maintenance update, 2026-10-17: GitHub Actions execution is retired, including manual and tag-triggered jobs. `make validate-local` now provides blocking ShellCheck and synthetic packaging/integrity checks. See [the current local release process](RELEASE_PROCESS.md); platform qualification and release publication remain separate owner gates.
+
 ## Vision
 
 **One-click game distribution for DJ-Engine.** A user downloads two files — `dj_engine.exe` + `doomexe.djpak` — runs a single command, and plays the game. Modders download `doomexe.djproj` and open it in the editor. The release pipeline handles everything from source to sealed package to GitHub Release.
@@ -8,7 +12,7 @@ Long-term: this repo becomes the central release hub for all DJ-Engine games and
 
 ---
 
-## Current State (What's Done)
+## Original planned state (historical)
 
 | Component | Status | Notes |
 |-----------|--------|-------|
@@ -20,9 +24,8 @@ Long-term: this repo becomes the central release hub for all DJ-Engine games and
 | `verify-djpak.sh` | Done, tested, bug fixed (PR #1) | 5-step verification passes |
 | `generate-project-json.py` | Done, tested | Scans game dirs, generates manifest |
 | `build-engine.sh` | Written, untested | Needs Rust 1.94.0 + cross-compile deps |
-| CI: `release-engine.yml` | Written, untested | workflow_dispatch only |
-| CI: `release-game.yml` | Written, untested | workflow_dispatch only |
-| CI: `validate-packages.yml` | Written, untested | workflow_dispatch only |
+| Historical workflows (all 4) | Retired | `.github/workflows-archive/`; no execution |
+| Local package validation | Maintained | `make validate-local`; synthetic fixture only |
 | Makefile | Done | Unified interface for all commands |
 | DoomExe `project.json` | Done (in DJ-Engine) | 4 scenes, 2 story graphs |
 | Documentation | Done (PR #2) | AGENTS, INTEGRATION, TESTING, ENGINE_AGENT_HANDOFF, CHANGELOG |
@@ -58,11 +61,9 @@ The sprint goal is `dj_engine.exe --play doomexe.djpak`. The releases side is re
 
 **Risk**: The build script may have issues (wrong cargo flags, missing deps, path problems) that we won't discover until we actually try.
 
-### 3. CI Workflows Never Triggered
+### 3. Hosted CI retired
 
-All 3 workflows are `workflow_dispatch` only (correct — billing constraint), but none have ever been triggered. We don't know if they actually work on GitHub's runners.
-
-**What's needed**: A single manual trigger of `validate-packages.yml` to prove the pipeline works end-to-end on GitHub infrastructure. This is the lowest-cost workflow to validate (no Rust compilation, just bash + python).
+The previous plan to prove GitHub-hosted execution is superseded. All four definitions are preserved as non-runnable history. Run `make validate-local` for source and synthetic packaging checks; use separately scoped product/platform validation before a release. Do not dispatch archived jobs or restore their triggers.
 
 ### 4. No `.djproj` Verification Script
 
@@ -93,8 +94,7 @@ The `.djpak` spec says "save data goes to a user-scoped save directory (not back
 | Engine can't load `.djpak`/`.djproj` | **Critical** | Engine agent | Implement Tasks 1-3 from AGENT_PROMPT_DJ_ENGINE.md |
 | Devin API can't find this repo | Medium | Devin/Infra | Repo rename cache is stale — should resolve in new sessions |
 | Engine build not validated | Medium | Release agent (me) | Install Rust 1.94.0 + deps, attempt build |
-| CI never tested | Low | DJ (manual trigger) | Trigger `validate-packages.yml` once to prove it works |
-| No GitHub Actions budget | Low | DJ | All workflows are dispatch-only; no cost until triggered |
+| Hosted execution | Retired | Maintenance owner | Keep definitions archived and maintain local checks |
 
 ---
 
@@ -116,7 +116,7 @@ The `.djpak` spec says "save data goes to a user-scoped save directory (not back
 
 - [ ] Write `verify-djproj.sh` (ZIP check, project.json validation, ref checks, path conventions)
 - [ ] Add `verify-djproj` target to Makefile
-- [ ] Update `validate-packages.yml` to also validate `.djproj`
+- [ ] Extend the local package gate if a separately reviewed `.djproj` verifier is added
 - [ ] Add tamper-detection regression tests for `.djproj`
 
 ### Phase 3: Engine Integration (Coordinated with Engine Agent)
@@ -134,8 +134,8 @@ The `.djpak` spec says "save data goes to a user-scoped save directory (not back
 
 **Goal**: Cut v0.1.0 release on GitHub with downloadable artifacts.
 
-- [ ] Trigger `release-engine.yml` to build v0.1.0 binaries
-- [ ] Trigger `release-game.yml` to package DoomExe v0.1.0
+- [ ] Prepare and qualify engine binaries locally under the engine owner
+- [ ] Prepare owned game packages locally, then publish only after DJ's separate release approval
 - [ ] Verify GitHub Release page has all expected artifacts
 - [ ] Test download → run → play flow on a clean machine
 - [ ] Update CHANGELOG.md with v0.1.0 release
@@ -158,7 +158,7 @@ The `.djpak` spec says "save data goes to a user-scoped save directory (not back
 ### Release Agent (Me) — Responsibilities
 - Maintain and fix all packaging/verification scripts
 - Maintain format specs and version compatibility
-- Maintain CI workflows
+- Maintain the blocking local package gate; preserve archived CI source
 - Validate engine builds compile correctly
 - Cut releases when engine + game packages are ready
 - Bug triage for anything related to packaging, distribution, integrity
@@ -168,14 +168,13 @@ The `.djpak` spec says "save data goes to a user-scoped save directory (not back
 - Provides: engine source (for building), `project.json` schema (for packaging), bug reports on our packages
 
 ### DJ (User) — Needs From
-- Manual workflow triggers when we confirm they're ready
-- Repo admin actions (branch settings, secrets for CI if needed)
-- Decision on when to cut v0.1.0 release
-- Budget/approval for GitHub Actions when ready to trigger CI
+- Decision on the next release after current product/platform qualification
+- Separate publication approval for reviewed local artifacts
+- Required review of source PRs; no change to branch protection or credential scope is implied
 
 ---
 
-## Immediate Next Actions
+## Original next actions (historical; reconcile with owners)
 
 1. **Validate engine build** — Install Rust 1.94.0, attempt `make build-engine`
 2. **Write `verify-djproj.sh`** — Close the verification gap

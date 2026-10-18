@@ -2,11 +2,13 @@
 
 > What the DJ-Engine agent needs to know about the release pipeline and what's ready for integration.
 >
-> Last updated: 2026-04-11
+> Original engine integration handoff: 2026-04-11. Its engine tasks and product-readiness statements are historical and must be reconciled with the active Helix agent before use.
+>
+> Maintenance update, 2026-10-17: use `make validate-local` for blocking ShellCheck and synthetic packaging/verification. All four GitHub workflows are retired. Actual engine, game and platform readiness are separate owner gates; this cleanup does not assign gameplay work or publish a release.
 
 ## TL;DR
 
-The releases repo is **fully operational**. All packaging scripts, format specs, and CI workflows work. DoomExe already has a `project.json`. The engine agent now needs to implement loaders so the engine can consume `.djpak` and `.djproj` files.
+The local packaging gate passes against its synthetic fixture. That does not establish current DoomExe or engine-loader readiness. The original integration tasks below describe the April 11 plan; consult the active engine/gameplay owner rather than treating them as unfinished work today.
 
 ## What's Ready (Releases Repo Side)
 
@@ -19,7 +21,7 @@ The releases repo is **fully operational**. All packaging scripts, format specs,
 | `.djpak` format spec | Complete | `spec/DJPAK_FORMAT.md` |
 | `.djproj` format spec | Complete | `spec/DJPROJ_FORMAT.md` |
 | Version compatibility spec | Complete | `spec/VERSION_COMPAT.md` |
-| CI workflows (all 3) | Ready (workflow_dispatch) | `.github/workflows/` |
+| Historical workflows (all 4) | Retired; not runnable | `.github/workflows-archive/` |
 | Makefile | Complete | `Makefile` |
 | DoomExe `project.json` | Already exists in DJ-Engine | `games/dev/doomexe/project.json` |
 
@@ -141,7 +143,7 @@ Two spaces between hash and path. One line per file. `checksum.sha256` itself is
 
 ## Constraints Reminder
 
-- **DO NOT** add automatic GitHub Actions triggers — `workflow_dispatch` only (billing)
+- **DO NOT** restore GitHub Actions execution, including `workflow_dispatch`; use the maintained local gate
 - **DO NOT** break the existing 2,097+ tests
 - **DO NOT** modify the Runtime Preview state machine — wire it to load from extracted dir
 - **DO** keep zero clippy warnings
@@ -149,6 +151,6 @@ Two spaces between hash and path. One line per file. `checksum.sha256` itself is
 
 ## Communication
 
-- File issues or leave PR comments on [dj-engine-releases](https://github.com/djmsqrvve/dj-engine-releases) if packages are malformed or specs need updating
+- File issues or leave PR comments on [dj-engine-releases](https://github.com/DJ-Game-Studios/dj-engine-releases) if packages are malformed or specs need updating
 - The release agent monitors this repo and will update packaging scripts / specs as needed
 - Coordinate via DJ if schema changes are needed that affect both repos
