@@ -54,7 +54,7 @@ make verify PACKAGE=releases/doomexe-0.1.0.djpak
 make build-engine DJ_ENGINE_DIR=/path/to/DJ-Engine
 
 # Generate project.json from a game's asset directory
-make generate-project PROJECT_DIR=/path/to/game --name GameName
+make generate-project PROJECT_DIR=/path/to/game GAME_NAME=GameName
 ```
 
 ## Devin Environment
